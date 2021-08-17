@@ -47,7 +47,7 @@ body{
     position:fixed;
 }
 
-.div_productos{
+.div_productos, .div_carrito{
   padding:10px 10px 10px 10px;
   width:32%;
   /* height:auto; */
@@ -59,7 +59,7 @@ body{
   margin: 0.39% 1.75% 3% 29.5%;
 }
 
-.div_ver_productos{
+.div_ver_productos, .div_ver_carrito{
 
   padding:2px 2px 2px 2px;
   width:100%;
@@ -73,14 +73,14 @@ body{
   overflow-y: scroll;
 }
 
-.div_item_producto{
+.div_item_producto, .div_link_carrito{
   padding:1px;
   background-color:rgb(194, 194, 194);
   border-radius:1px;
   margin:1px;
 }
 
-.div_item_producto:hover{
+.div_item_producto:hover, .div_link_carrito:hover{
   background-color:rgb(46, 46, 46);
   color:white;
 
