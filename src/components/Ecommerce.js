@@ -49,7 +49,6 @@ function updateItemsCarrito(token, itemsCarrito) {
     const dispatch = useDispatch();
     
     const [logueado, setLogueado] = useState(true);
-    const [carrito, setCarrito] = useState(false);
 
     const [nomUsuario, setNomUsuario] = useState("");
 
@@ -141,97 +140,6 @@ function updateItemsCarrito(token, itemsCarrito) {
         store.dispatch(updateItemsCarrito(tokenUsuario, listaActual))
     }
 
-    const camb_carrito = (bool) => {
-        if(bool === false){
-            setCarrito(false)
-        }else{
-            setCarrito(true)
-        }
-    }
-
-    const ag_ordenes_productos = idOrden => {
-        if(idOrden !== 0){
-            let prec_total = 0;
-            prodsCarrito.forEach((producto) => {
-                if(producto.cantidad > 0){
-                const data = { 
-                    "ordenId": idOrden,
-                    "productoId": producto.id,
-                    "cantidad": producto.cantidad   };
-                const requestOptions = {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                    };
-                    fetch("http://localhost:3000/ordenes-productos", requestOptions) // "https://jsonplaceholder.typicode.com/posts"
-                    .then(response => response.json())    
-                    .then(res => console.log(res));
-                    prec_total = prec_total + producto.precio * producto.cantidad
-                }
-            })
-
-            let tokens = store.getState().data.token.split(".")
-            let json_parse = JSON.parse(atob(tokens[1]))
-            let id_de_usuario = json_parse.id
-            try {
-                const data = { 
-                    "id": idOrden,
-                    "usuarioId":id_de_usuario,
-                    "precioTotal":prec_total   };
-                const requestOptions = {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                    };
-                fetch("http://localhost:3000/ordenes/" + idOrden, requestOptions) // "https://jsonplaceholder.typicode.com/posts"
-                    .then(response => response.json())
-                    .then(res => console.log(res));                
-            } catch (error) {
-                console.log("Error: " + error)                
-            }
-            
-            setProdsCarrito([])
-            store.dispatch(updateItemsCarrito(tokenUsuario, []))
-        }
-    }
-
-    const handleSubmitPurchase = e => {
-        e.preventDefault();
-
-        if(prodsCarrito){
-            let tokens = store.getState().data.token.split(".")
-            let json_parse = JSON.parse(atob(tokens[1]))
-            let id_de_usuario = json_parse.id
-
-            let fec_actual = new Date()
-            const data = { 
-                "usuarioId": id_de_usuario,
-                "created_at": fec_actual,
-            };
-            const requestOptions = {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-                };
-            fetch("http://localhost:3000/ordenes", requestOptions) // "https://jsonplaceholder.typicode.com/posts"
-                .then(response => response.json())
-                .then(res => console.log(res));
-            // console.log(store.getState())
-        let ult_orden = [];
-        let id_ult_orden = 0;
-        axios
-            .get("http://localhost:3000/ordenes/ultima-orden")
-            .then((res) => {
-                ult_orden = res;
-                id_ult_orden = res.data[0].id;
-                console.log(res.data)
-                console.log(id_ult_orden)
-                ag_ordenes_productos(id_ult_orden)
-            });
-        console.log(ult_orden)
-        }
-    };
-
     const isNumberKey = ev => {
         if(ev.charCode < 48 || ev.charCode > 57){
             ev.preventDefault();
@@ -293,18 +201,17 @@ function updateItemsCarrito(token, itemsCarrito) {
                     <input type="text" className = "inp_busq_productos" value={productsSearch} onChange={onProductsSearchChange} />
                 </div>
                 <br />
-                <div onClick={() => {camb_carrito(false)}} className = "div_link_carrito">
+                <div onClick = {() => {window.location.href = "/ecommerce"}} className = "div_link_carrito">
                 <span>Ecommerce</span>
                 </div>
-                <div onClick={()  => {camb_carrito(true)}} className = "div_link_carrito">
+                <div onClick = {() => {window.location.href = "/cart"}} className = "div_link_carrito">
                 <span>Carrito</span>
                 </div>
-                <div className = "div_link_carrito">
-                <span onClick = {() => {window.location.href = "/compras"}}>Compras</span>
+                <div onClick = {() => {window.location.href = "/compras"}} className = "div_link_carrito">
+                <span >Compras</span>
                 </div>
             </div>
 
-            {!carrito ? (
             <div className = "div_productos">
                 <div className = "div_ver_productos">
                     Productos:<br />
@@ -329,36 +236,9 @@ function updateItemsCarrito(token, itemsCarrito) {
                     </section>
                 </div>
             </div>
-            ) : (<></>)}
-
-            {carrito ? (
-            <div className = "div_carrito">
-                <div className = "div_ver_carrito">
-                    Productos del carrito:<br />
-                    <section>
-                    {prodsCarrito !== [] ? prodsCarrito.map(prod => (
-                        <div key = {prod.id} className = "div_item_producto">
-                        <span>
-                            Nombre: {prod.nombre}
-                        </span>
-                        <br />
-                        <span>
-                            Precio: {prod.precio}
-                        </span>
-                        <br />
-                        <span>
-                            Cantidad: {prod.cantidad}
-                        </span>
-                        </div>
-                    )) : {}}
-                    </section>
-                    <br />
-                    <button onClick = {handleSubmitPurchase} className = "bot_comprar">Comprar</button>
-                </div>
-            </div>
-            ) : (<></>)}
         </div>
     )
 }
 
 // export default Ecommerce
+

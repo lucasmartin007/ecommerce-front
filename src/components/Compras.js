@@ -131,16 +131,14 @@ function updateItemsCarrito(token, itemsCarrito) {
                         prec_total = prec_total + prod.precio * ord_prod.cantidad;
                     } )
                 });
+                // try {
+                    setProductosOrden(orden_productos);
+                // } catch (error) {
+                //     console.log("Error al setear productos de orden: " + error);            
+                // }
                 setPrecioTotal(prec_total);
             }
         });
-        console.log(orden_productos);
-        try {
-            setProductosOrden(orden_productos);
-        } catch (error) {
-            console.log("Error al setear productos de orden: " + error);            
-        }
-        console.log(productosOrden);
     }
 
     const ver_orden = (id_orden, fec_orden) => {
@@ -189,11 +187,14 @@ function updateItemsCarrito(token, itemsCarrito) {
                 <br />
                 <hr />
                 <br />
-                <div className = "div_link_carrito">
-                <span onClick = {() => {window.location.href = "/ecommerce"}}>Ecommerce</span>
+                <div onClick = {() => {window.location.href = "/ecommerce"}} className = "div_link_carrito">
+                <span>Ecommerce</span>
                 </div>
-                <div className = "div_link_carrito">
-                <span onClick = {() => {window.location.href = "/compras"}}>Compras</span>
+                <div onClick = {() => {window.location.href = "/cart"}} className = "div_link_carrito">
+                <span>Carrito</span>
+                </div>
+                <div onClick = {() => {window.location.href = "/compras"}} className = "div_link_carrito">
+                <span >Compras</span>
                 </div>
             </div>
 
@@ -216,14 +217,15 @@ function updateItemsCarrito(token, itemsCarrito) {
                 <div className = "div_ver_detalles">
                     Detalles de compra:<br />
                     <section>
-                    {ordenSeleccionada ? (
+                    {/* {ordenSeleccionada !== [] ? ( */}
                         <div className = "div_item_orden">
                         <span>
                             {ordenSeleccionada.fec_orden}
                         </span>
                         <br />
                         {productosOrden !== [] ? productosOrden.map(prod => (
-                            <div key = {prod.id}>
+                            <div key = {prod.id}> 
+                            {/*  */}
                             <span>
                                 Nombre: {prod.nombre}
                             </span>
@@ -239,10 +241,11 @@ function updateItemsCarrito(token, itemsCarrito) {
                             <span>
                                 Precio total: {precioTotal}
                             </span>
+                            <br />
                             </div>
                         )) : {}}
                         </div>
-                    ) : {}}
+                    
                     </section>
                 </div>
             </div>
