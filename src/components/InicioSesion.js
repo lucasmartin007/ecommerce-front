@@ -12,10 +12,11 @@ import { store, persistor } from './Tienda/storePersist';
 
 
 // action creator
-function updateIdUsuario(idUsuario) {
+function updateToken(token, itemsCarrito) {
   return {
     type: 'UPDATE',
-    idUsuario,
+    token,
+    itemsCarrito,
   };
 }
 
@@ -28,13 +29,19 @@ export const InicioSesion = ({ usuario }) => {
     
     const [logueado, setLogueado] = useState(false)
 
-    const idUsuario = store.getState().login.idUsuario
+    // const idUsuario = store.getState().data.idUsuario
 
     const dispatch = useDispatch()
     
     const verificar_login = () => {
-      if(idUsuario !== ""){
+      if(store.getState().data.token !== ""){
         setLogueado(true)
+        console.log(JSON.stringify(store.getState().data.token))
+        console.log(logueado)
+      }else{
+        setLogueado(false)
+        console.log(JSON.stringify(store.getState().data.token))
+        console.log(logueado)
       }
     }
     
@@ -53,13 +60,17 @@ export const InicioSesion = ({ usuario }) => {
         .then(response => response.json())
         .then(r => {
           if(r && r.token){
-            store.dispatch(updateIdUsuario(r.token))
+            let itemsCarrito = []
+            try {
+              store.dispatch(updateToken(r.token, itemsCarrito))              
+            } catch (error) {
+              console.log("Error: " + error)              
+            }
 
             
             console.log(r.token)
 
             console.log(userEmail)
-            console.log(userPassword)
 
             setLogueado(true)
           }else{
@@ -89,7 +100,7 @@ export const InicioSesion = ({ usuario }) => {
 
             <a href = "/registrarse">Ir al registro</a><br />
         </form>
-            <div>Id de usuario: {store.getState().login.idUsuario}</div>
+            <div>Id de usuario: {store.getState().data.token}</div>
         </div>
     )
 }

@@ -36,12 +36,12 @@ export const Registro = () => {
     };
 
     //
-    const idUsuario = store.getState().login.idUsuario;
+    const idUsuario = store.getState().info.idUsuario;
     //
     const [logueado, setLogueado] = useState(false);
 
     const verificar_login = () => {
-      if(idUsuario !== ""){
+      if(JSON.stringify(store.getState().info) !== "{}"){
         setLogueado(true);
       }
     }
@@ -72,4 +72,3 @@ export const Registro = () => {
 }
 
 // export default Registro
-

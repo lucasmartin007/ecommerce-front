@@ -7,6 +7,7 @@ import { Registro } from "./components/Registro";
 
 import { InicioSesion } from "./components/InicioSesion";
 import { Ecommerce } from './components/Ecommerce';
+import { Compras } from './components/Compras';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route exact path = "/" component = {InicioSesion} />
           <Route exact path = "/registrarse" component = {Registro} />
           <Route exact path = "/ecommerce" component = {Ecommerce} />
+          <Route exact path = "/compras" component = {Compras} />
         </Switch>
     </BrowserRouter>
   )

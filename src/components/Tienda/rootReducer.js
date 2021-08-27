@@ -1,19 +1,17 @@
 import { combineReducers } from 'redux'
 import { persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
-import cartReducer from './cartReducer'
-import loginReducer from "./loginReducer"
+import dataReducer from "./dataReducer"
 
 
 const persistConfig = {
 key:"root",
 storage,
-whitelist:['login', 'itemsCarrito']
+whitelist:['data']
 }
 
 const rootReducer = combineReducers({
-login:loginReducer,
-cart:cartReducer
+data:dataReducer
 })
 
 export default persistReducer(persistConfig, rootReducer)

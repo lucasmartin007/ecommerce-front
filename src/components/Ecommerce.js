@@ -22,18 +22,20 @@ import { useHistory } from "react-router-dom";
 
 
 // action creator
-function updateIdUsuario(idUsuario) {
+function updateToken(token, itemsCarrito) {
     return {
       type: 'UPDATE',
-      idUsuario,
+      token,
+      itemsCarrito,
     };
   }
 
 // action creator
-function updateItemsCarrito(itemsCarrito) {
+function updateItemsCarrito(token, itemsCarrito) {
     return {
-    type: 'UPDATE',
-    itemsCarrito,
+      type: 'UPDATE',
+      token: token,
+      itemsCarrito: itemsCarrito,
     };
   }
   
@@ -43,7 +45,7 @@ function updateItemsCarrito(itemsCarrito) {
     const [listProductos, setListProductos] = useState([]);
     const [productsSearch, setProductsSearch] = useState("");
     
-    const idUsuario = store.getState().login.idUsuario;
+    let tokenUsuario = store.getState().data.token;
     const dispatch = useDispatch();
     
     const [logueado, setLogueado] = useState(true);
@@ -67,23 +69,19 @@ function updateItemsCarrito(itemsCarrito) {
     const onProductsSearchChange = e => {
         setProductsSearch(e.target.value);
 
-        console.log(listProductos)
-
         cambiarProductos();
 
         console.log(listProductos)
     }
 
     const cerrar_sesion = () => {
-        store.dispatch(updateIdUsuario(""));
+        store.dispatch(updateToken(""));
         window.location.replace("");
     }
 
     const busc_nom_usuario = () => {
-        // let json_decodificado = jwt_decode(idUsuario, {header:true});
-        // setNomUsuario(json_decodificado.name);
         try {
-            let tokens = idUsuario.split(".")
+            let tokens = store.getState().data.token.split(".")
             let json_parse = JSON.parse(atob(tokens[1]))
             setNomUsuario(json_parse.name)
         } catch (error) {
@@ -93,12 +91,19 @@ function updateItemsCarrito(itemsCarrito) {
     }
 
     const verificar_login = () => {
-        if(idUsuario !== ""){
+        console.log(store.getState().data.token)
+        if(store.getState().data.token !== ""){
             setLogueado(true);
             busc_nom_usuario();
+
+            tokenUsuario = store.getState().data.token;
         }else{
             setLogueado(false);
         }
+
+        setProdsCarrito([])
+
+        console.log("El usuario esta logueado:" + logueado);
     }
 
     const verProductos = () => {
@@ -115,30 +120,28 @@ function updateItemsCarrito(itemsCarrito) {
             });
     }
 
-    const ag_carrito = (id_producto, nom_producto) => {
-        // let it_carrito = store.getState().items_carrito;
-        // store.dispatch(updateItemsCarrito(it_carrito))
-
+    const ag_carrito = (id_producto, nom_producto, prec_producto) => {
         let listaActual = []
         prodsCarrito.forEach((prod) => {
             listaActual.push(prod)
         })
-        // listaActual.push(id_producto)
+
+        let cant_producto = parseInt( document.getElementById("inp_cantidad" + id_producto).value )
+        if(cant_producto > 0){
         listaActual.push({
             "id":id_producto,
-            "nombre":nom_producto
+            "nombre":nom_producto,
+            "precio":prec_producto,
+            "cantidad":cant_producto,
         })
+        }
 
         setProdsCarrito(listaActual)
 
-        store.dispatch(updateItemsCarrito(listaActual))
-
-        console.log(store.getState().cart.itemsCarrito)
+        store.dispatch(updateItemsCarrito(tokenUsuario, listaActual))
     }
 
     const camb_carrito = (bool) => {
-        store.dispatch(updateIdUsuario(idUsuario))
-        store.dispatch(updateItemsCarrito(prodsCarrito))
         if(bool === false){
             setCarrito(false)
         }else{
@@ -146,44 +149,101 @@ function updateItemsCarrito(itemsCarrito) {
         }
     }
 
+    const ag_ordenes_productos = idOrden => {
+        if(idOrden !== 0){
+            let prec_total = 0;
+            prodsCarrito.forEach((producto) => {
+                if(producto.cantidad > 0){
+                const data = { 
+                    "ordenId": idOrden,
+                    "productoId": producto.id,
+                    "cantidad": producto.cantidad   };
+                const requestOptions = {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                    };
+                    fetch("http://localhost:3000/ordenes-productos", requestOptions) // "https://jsonplaceholder.typicode.com/posts"
+                    .then(response => response.json())    
+                    .then(res => console.log(res));
+                    prec_total = prec_total + producto.precio * producto.cantidad
+                }
+            })
+
+            let tokens = store.getState().data.token.split(".")
+            let json_parse = JSON.parse(atob(tokens[1]))
+            let id_de_usuario = json_parse.id
+            try {
+                const data = { 
+                    "id": idOrden,
+                    "usuarioId":id_de_usuario,
+                    "precioTotal":prec_total   };
+                const requestOptions = {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                    };
+                fetch("http://localhost:3000/ordenes/" + idOrden, requestOptions) // "https://jsonplaceholder.typicode.com/posts"
+                    .then(response => response.json())
+                    .then(res => console.log(res));                
+            } catch (error) {
+                console.log("Error: " + error)                
+            }
+            
+            setProdsCarrito([])
+            store.dispatch(updateItemsCarrito(tokenUsuario, []))
+        }
+    }
+
     const handleSubmitPurchase = e => {
         e.preventDefault();
 
         if(prodsCarrito){
-            // let tokens = idUsuario.split(".")
-            // let json_parse = JSON.parse(atob(tokens[1]))
-            // let id_de_usuario = json_parse.id
-            // const data = { 
-            //     "usuarioId": id_de_usuario   };
-            // const requestOptions = {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify(data)
-            //     };
-            // fetch("http://localhost:3000/ordenes", requestOptions) // "https://jsonplaceholder.typicode.com/posts"
-            //     .then(response => response.json())      
-            //     .then(res => console.log(res)); 
-            console.log(store.getState())
-        // prodsCarrito.forEach((comp) => {
-        //     const data = { 
-        //         "username": userName,
-        //         "email": userEmail,
-        //         "password": userPassword   };
-        //     const requestOptions = {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify(data)
-        //         };
-        //         fetch("http://localhost:3000/signup", requestOptions) // "https://jsonplaceholder.typicode.com/posts"
-        //         .then(response => response.json())      
-        //         .then(res => console.log(res)); 
+            let tokens = store.getState().data.token.split(".")
+            let json_parse = JSON.parse(atob(tokens[1]))
+            let id_de_usuario = json_parse.id
 
-        // })
+            let fec_actual = new Date()
+            const data = { 
+                "usuarioId": id_de_usuario,
+                "created_at": fec_actual,
+            };
+            const requestOptions = {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+                };
+            fetch("http://localhost:3000/ordenes", requestOptions) // "https://jsonplaceholder.typicode.com/posts"
+                .then(response => response.json())
+                .then(res => console.log(res));
+            // console.log(store.getState())
+        let ult_orden = [];
+        let id_ult_orden = 0;
+        axios
+            .get("http://localhost:3000/ordenes/ultima-orden")
+            .then((res) => {
+                ult_orden = res;
+                id_ult_orden = res.data[0].id;
+                console.log(res.data)
+                console.log(id_ult_orden)
+                ag_ordenes_productos(id_ult_orden)
+            });
+        console.log(ult_orden)
         }
-    
-        
-         
     };
+
+    const isNumberKey = ev => {
+        if(ev.charCode < 48 || ev.charCode > 57){
+            ev.preventDefault();
+        }
+    }
+
+    useEffect(() => {
+        const establecerprodsCarrito = (prodsCarrito) => {
+            setProdsCarrito(prodsCarrito);
+        }
+        establecerprodsCarrito(prodsCarrito);
+    }, [prodsCarrito]);
 
     useEffect(() => {
         const establecerListProductosInicial = (listProductosInicial) => {
@@ -239,6 +299,9 @@ function updateItemsCarrito(itemsCarrito) {
                 <div onClick={()  => {camb_carrito(true)}} className = "div_link_carrito">
                 <span>Carrito</span>
                 </div>
+                <div className = "div_link_carrito">
+                <span onClick = {() => {window.location.href = "/compras"}}>Compras</span>
+                </div>
             </div>
 
             {!carrito ? (
@@ -247,10 +310,20 @@ function updateItemsCarrito(itemsCarrito) {
                     Productos:<br />
                     <section>
                     {listProductos !== [] ? listProductos.map(prod => (
-                        <div key = {prod.id} onClick = {() => {ag_carrito(prod.id, prod.nombre)}} className = "div_item_producto">
+                        <div key = {prod.id} className = "div_item_producto">
                         <span>
                             {prod.nombre}
                         </span>
+                        <br />
+                        <span className = "span_precio">
+                            ${prod.precio}
+                        </span>
+                        <br />
+                        <span>Cantidad:
+                        </span>
+                        <input type = "number" id = {"inp_cantidad" + prod.id} className = "inp_cantidad" onKeyPress={isNumberKey} />
+                        <br />
+                        <span onClick = {() => {ag_carrito(prod.id, prod.nombre, prod.precio)}} className = "span_ag_carrito">Agregar</span>
                         </div>
                     )) : {}}
                     </section>
@@ -266,7 +339,15 @@ function updateItemsCarrito(itemsCarrito) {
                     {prodsCarrito !== [] ? prodsCarrito.map(prod => (
                         <div key = {prod.id} className = "div_item_producto">
                         <span>
-                            {prod.nombre}
+                            Nombre: {prod.nombre}
+                        </span>
+                        <br />
+                        <span>
+                            Precio: {prod.precio}
+                        </span>
+                        <br />
+                        <span>
+                            Cantidad: {prod.cantidad}
                         </span>
                         </div>
                     )) : {}}
