@@ -54,6 +54,15 @@ function updateItemsCarrito(token, itemsCarrito) {
 
     const [prodsCarrito, setProdsCarrito] = useState([]);
 
+    const [cantTotal, setCantTotal] = useState(0);
+    const [multiplicador, setMultiplicador] = useState(1);    
+    const [totalPaginas, setTotalPaginas] = useState(0);
+    const pageNumbers = [];
+    const cant_por_pagina = 5;
+
+    // const [rutProducto, setRutProducto] = useState("");
+    const rutProducto = "productos/ferreter.jpg";
+
     const cambiarProductos = () => {
         let arr_productos = [];
         for(let i = 0; i < listProductosInicial.length; i++){
@@ -100,12 +109,24 @@ function updateItemsCarrito(token, itemsCarrito) {
             setLogueado(false);
         }
 
-        setProdsCarrito([])
+        // setProdsCarrito([])
 
         console.log("El usuario esta logueado:" + logueado);
     }
 
-    const verProductos = () => {
+    const verProductosPaginacion = (multiplica) => {
+        let n_list_productos = [];
+        for(let i = (multiplica - 1) * cant_por_pagina; i < (multiplica - 1) * cant_por_pagina + cant_por_pagina; i++){
+            n_list_productos.push(listProductosInicial[i]);
+            if(i === listProductosInicial.length - 1){
+                break;
+            }
+        }
+        setListProductos(n_list_productos);
+        console.log(listProductos);
+    }
+
+    const verProductos = (cantProductos, multiplica) => {
         const url_ver_productos = "http://localhost:3000/productos";
         const requestOptionsMensajes = {
             method: "GET",
@@ -114,12 +135,56 @@ function updateItemsCarrito(token, itemsCarrito) {
 		fetch(url_ver_productos)
             .then(res => res.json())
             .then(data => {
-                setListProductos(data);
                 setListProductosInicial(data);
             });
     }
 
-    const ag_carrito = (id_producto, nom_producto, prec_producto) => {
+    const verProductosInicial2 = (cant_productos) => {
+        const url_ver_productos = "http://localhost:3000/productos-paginacion/" + cant_productos + "/" + cant_por_pagina + "/1";
+        const requestOptionsMensajes = {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        };
+		fetch(url_ver_productos)
+            .then(res => res.json())
+            .then(data => {
+                setListProductos(data);
+            });
+    }
+
+    const verProductosInicial = () => {
+        const url_ver_productos = "http://localhost:3000/productos/count";
+        const requestOptionsMensajes = {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        };
+		fetch(url_ver_productos)
+            .then(res => res.json())
+            .then(data => {
+                setCantTotal(data.count);
+                setTotalPaginas(Math.ceil(data.count / cant_por_pagina));
+                verProductosInicial2(data.count);
+            });
+    }
+
+    const cargarPageNumbers = (cant_productos) => {
+        for (let i = 1; i <= Math.ceil(cant_productos / cant_por_pagina); i++) {
+            pageNumbers.push(i);
+        }
+        console.log(pageNumbers)
+        return(
+            pageNumbers.length > 1 ? pageNumbers.map(num => (
+                <span>
+                    <span onClick = {() => {verProductosPaginacion(num)}} className = "span_paginacion">
+                        {num}
+                    </span>
+                    &nbsp;&nbsp;
+                </span>
+            )) : (<></>)
+        )
+    }
+
+    const ag_carrito = (id_producto, nom_producto, prec_producto, url_imag_producto) => {
         let listaActual = []
         prodsCarrito.forEach((prod) => {
             listaActual.push(prod)
@@ -132,12 +197,50 @@ function updateItemsCarrito(token, itemsCarrito) {
             "nombre":nom_producto,
             "precio":prec_producto,
             "cantidad":cant_producto,
+            "url_imagen":url_imag_producto
         })
         }
 
         setProdsCarrito(listaActual)
 
         store.dispatch(updateItemsCarrito(tokenUsuario, listaActual))
+    }
+
+    const removerCarrito = id_producto => {
+        let n_prods_carrito = [];
+        prodsCarrito.forEach(prod => {
+            if(prod.id !== id_producto){
+                n_prods_carrito.push(prod);
+            }
+        });
+        setProdsCarrito(n_prods_carrito);
+        store.dispatch(updateItemsCarrito(tokenUsuario, n_prods_carrito));
+    }
+
+    const actualizarCantidad = id_producto => {
+        let n_prods_carrito = [];
+        prodsCarrito.forEach(prod => {
+            if(prod.id !== id_producto){
+                n_prods_carrito.push(prod);
+            }else{
+                let n_cantidad = document.getElementById("inp_cantidad_actualizar" + id_producto).value;
+                if(n_cantidad > 0){
+                let n_item = {
+                    "id":id_producto,
+                    "nombre":prod.nombre,
+                    "precio":prod.precio,
+                    "cantidad":parseInt(n_cantidad),
+                    "url_imagen":prod.url_imagen
+                };
+                n_prods_carrito.push(n_item);
+                
+                }else{
+                n_prods_carrito.push(prod);
+                }
+            }
+        });
+        setProdsCarrito(n_prods_carrito);
+        store.dispatch(updateItemsCarrito(tokenUsuario, n_prods_carrito));
     }
 
     const isNumberKey = ev => {
@@ -175,13 +278,32 @@ function updateItemsCarrito(token, itemsCarrito) {
     }, [productsSearch]);
 
     useEffect(() => {
+        const establecerCantTotal = (cantTotal) => {
+            setCantTotal(cantTotal);
+        }
+        establecerCantTotal(cantTotal);
+    }, [cantTotal]);
+
+    useEffect(() => {
+        const establecerTotalPaginas = (totalPaginas) => {
+            setTotalPaginas(totalPaginas);
+        }
+        establecerTotalPaginas(totalPaginas);
+    }, [totalPaginas]);
+
+    useEffect(() => {
         verificar_login();
 
         if(logueado){
             busc_nom_usuario();
         }
 
+        verProductosInicial();
         verProductos();
+        // verProductosPaginacion();
+        // setRutProducto("https://www.modregohogar.com/329118-home_default/tornillo-hexagonal-hispanox-din-933-a2-5x20-acero-inoxidable.jpg");
+
+        setProdsCarrito(store.getState().data.itemsCarrito);
 	}, [])
 
     if(!logueado){
@@ -215,22 +337,82 @@ function updateItemsCarrito(token, itemsCarrito) {
             <div className = "div_productos">
                 <div className = "div_ver_productos">
                     Productos:<br />
-                    <section>
-                    {listProductos !== [] ? listProductos.map(prod => (
+                    <section className = "sect_productos">
+                    {listProductos.length !== 0 ? listProductos.map(prod => (
                         <div key = {prod.id} className = "div_item_producto">
-                        <span>
-                            {prod.nombre}
-                        </span>
-                        <br />
-                        <span className = "span_precio">
-                            ${prod.precio}
-                        </span>
-                        <br />
-                        <span>Cantidad:
-                        </span>
-                        <input type = "number" id = {"inp_cantidad" + prod.id} className = "inp_cantidad" onKeyPress={isNumberKey} />
-                        <br />
-                        <span onClick = {() => {ag_carrito(prod.id, prod.nombre, prod.precio)}} className = "span_ag_carrito">Agregar</span>
+                        <div className = "div_imag_producto">
+                            {prod.url_imagen !== null ? (
+                                <img src = {prod.url_imagen} className = "imag_producto" />
+                            ) : (
+                                <img src = {rutProducto} className = "imag_producto" />
+                            )}
+                            
+                        </div>
+                        <div className = "div_det_producto">
+                            <div className = "div_centrar">
+                            <span className = "span_nombre">
+                                {prod.nombre}
+                            </span>
+                            <br />
+                            <span className = "span_precio">
+                                ${prod.precio}
+                            </span>
+                            <br />
+                            <span className = "span_cantidad">
+                                Cantidad:
+                            </span>
+                            <br />
+                            <span className = "span_inp_cantidad">
+                                <input type = "number" id = {"inp_cantidad" + prod.id} className = "inp_cantidad" onKeyPress={isNumberKey} />
+                            </span>
+                            <br />
+                            <span onClick = {() => {ag_carrito(prod.id, prod.nombre, prod.precio, prod.url_imagen)}} className = "span_ag_carrito">Agregar</span>
+                            </div>
+                        </div>
+                        </div>
+                    )) : (<></>)}
+                    </section>
+                    <div className = "div_paginacion">
+                        {cargarPageNumbers(cantTotal)}
+                    </div>
+                </div>
+            </div>
+
+            <div className = "div_detalle_compra">
+                <div className = "div_ver_detalles">
+                    Carrito actual:<br />
+                    <section className = "sect_carrito">
+                    {prodsCarrito !== [] ? prodsCarrito.map(prod => (
+                        <div key = {prod.id} className = "div_item_producto">
+                        <div className = "div_imag_producto">
+                            {prod.url_imagen !== null ? (
+                                <img src = {prod.url_imagen} className = "imag_producto" />
+                            ) : (
+                                <img src = {rutProducto} className = "imag_producto" />
+                            )}
+                            
+                        </div>
+                        <div className = "div_det_producto">
+                            <div className = "div_centrar">
+                            <span className = "span_nombre">
+                                {prod.nombre}
+                            </span>
+                            <br />
+                            <span className = "span_precio">
+                                ${prod.precio}
+                            </span>
+                            <br />
+                            <span>
+                                Cantidad: {prod.cantidad}
+                            </span><br />
+                            <span className = "span_inp_cantidad">
+                                <input type = "number" id = {"inp_cantidad_actualizar" + prod.id} className = "inp_cantidad" />
+                            </span><br />
+                            <span onClick = {() => {actualizarCantidad(prod.id)}} className = "span_carrito_actualizar">Actualizar</span><br />
+                            <span onClick = {() => {removerCarrito(prod.id)}} className = "span_carrito_remover">Remover</span>
+
+                            </div>
+                        </div>
                         </div>
                     )) : {}}
                     </section>
