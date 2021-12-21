@@ -47,8 +47,6 @@ function updateItemsCarrito(token, itemsCarrito) {
     const [ordenSeleccionada, setOrdenSeleccionada] = useState([]);
     const [detallesCompra, setDetallesCompra] = useState([]);
 
-    const [productosOrden, setProductosOrden] = useState([]);
-
     let tokenUsuario = store.getState().data.token;
     const dispatch = useDispatch();
     
@@ -56,9 +54,11 @@ function updateItemsCarrito(token, itemsCarrito) {
 
     const [nomUsuario, setNomUsuario] = useState("");
 
+    const [seleccionoOrdProductos, setSeleccionoOrdProductos] = useState(false);
+    const [ordenProductos, setOrdenProductos] = useState([]);
     const [precioTotal, setPrecioTotal] = useState(0);
 
-    let orden_productos = [];
+    const rutProducto = "productos/ferreter.jpg";
 
     const cerrar_sesion = () => {
         store.dispatch(updateToken(""));
@@ -112,33 +112,37 @@ function updateItemsCarrito(token, itemsCarrito) {
     }
 
     const ver_productos_orden = (id_orden) => {
-        // let orden_productos = [];
+        try {
+            setOrdenProductos(ordenProductos => []); 
+            console.log(ordenProductos);
+        } catch (err) {
+            console.log("No se pudo modificar orden productos");            
+        }
+        let orden_productos = [];
+        let prec_total = 0;
         fetch("http://localhost:3000/idproductos-ordenesproductos/" + id_orden)
         .then(response => response.json())
         .then(ord_producto => {
-            let prec_total = 0;
             if(ord_producto !== []){
                 ord_producto.forEach(ord_prod => {
-                    fetch("http://localhost:3000/productos/" + ord_prod.productoId)
-                    .then(response => response.json())    
-                    .then(prod => {
-                        orden_productos.push({
-                            "id":prod.id,
-                            "nombre":prod.nombre,
-                            "precio":prod.precio,
-                            "cantidad":ord_prod.cantidad
-                        });
-                        prec_total = prec_total + prod.precio * ord_prod.cantidad;
-                    } )
-                });
-                // try {
-                    setProductosOrden(orden_productos);
-                // } catch (error) {
-                //     console.log("Error al setear productos de orden: " + error);            
-                // }
+                    orden_productos.push({
+                        "id": ord_prod.id,
+
+                        "productoId": ord_prod.productoId,
+                        "nombre": ord_prod.nombre,
+                        "precio": ord_prod.precio,
+                        "tiene_imagen": ord_prod.tiene_imagen,
+                        "url_imagen": ord_prod.url_imagen,
+
+                        "cantidad": ord_prod.cantidad
+                    });
+                prec_total = prec_total + ord_prod.precio * ord_prod.cantidad;
+                } )
                 setPrecioTotal(prec_total);
             }
         });
+        setOrdenProductos(orden_productos);
+        setSeleccionoOrdProductos(true);
     }
 
     const ver_orden = (id_orden, fec_orden) => {
@@ -158,11 +162,11 @@ function updateItemsCarrito(token, itemsCarrito) {
     }, [precioTotal]);
 
     useEffect(() => {
-        const establecerProductosOrden = (productos) => {
-            setProductosOrden(productos);
+        const establecerOrdenProductos = (productos) => {
+            setOrdenProductos(productos);
         }
-        establecerProductosOrden(productosOrden);
-    }, [productosOrden]);
+        establecerOrdenProductos(ordenProductos);
+    }, [ordenProductos]);
 
     useEffect(() => {
         verificar_login();
@@ -223,28 +227,44 @@ function updateItemsCarrito(token, itemsCarrito) {
                             {ordenSeleccionada.fec_orden}
                         </span>
                         <br />
-                        {productosOrden !== [] ? productosOrden.map(prod => (
-                            <div key = {prod.id}> 
-                            {/*  */}
+                        {ordenProductos !== [] ? ordenProductos.map(ord_prod => (
+                            <div key = {ord_prod.id}> 
+                            {ord_prod.tiene_imagen ? (
+                                <div className = "div_imagordproducto">
+                                    <img src = {ord_prod.url_imagen} className = "imag_ordproducto" />
+                                </div>
+                            ) : (
+                                <div className = "div_imagordproducto">
+                                    <img src = {rutProducto} className = "imag_ordproducto" />
+                                </div>
+                            )}
                             <span>
-                                Nombre: {prod.nombre}
+                                Nombre: {ord_prod.nombre}
                             </span>
                             <br />
                             <span>
-                                Precio: {prod.precio}
+                                Precio: {ord_prod.precio}
                             </span>
                             <br />
                             <span>
-                                Cantidad: {prod.cantidad}
+                                Cantidad: {ord_prod.cantidad}
                             </span>
                             <br />
-                            <span>
-                                Precio total: {precioTotal}
-                            </span>
-                            <br />
+                            <hr />
                             </div>
                         )) : {}}
                         </div>
+                        {
+                            seleccionoOrdProductos ? (
+                                <div>
+                                    <span>
+                                        Precio total: {precioTotal}
+                                    </span>
+                                </div>
+                            ) : (
+                                <span></span>
+                            )
+                        }
                     
                     </section>
                 </div>

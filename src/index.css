@@ -203,3 +203,14 @@ body{
   text-decoration:underline;
   cursor:pointer;
 }
+
+.div_imagordproducto{
+  position:absolute;
+
+  width:100%;
+}
+
+.imag_ordproducto{
+  margin-left:75%;
+  width:15%;
+}
